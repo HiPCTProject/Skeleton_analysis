@@ -1,0 +1,226 @@
+
+function oblique_slice_vessel(genx_outliers,cc4points,cc1points,cc9points,raw_data_path)
+datapath='/Users/clairewalsh/Dropbox (UCL)/HiP-CT_Claire_analysis/LADAF-2021-17/Topology_paper'
+cc4nodes=readtable(fullfile(datapath,"metrics_for_graphs/50um-LADAF-2021-17_labels_finalised_2_connected_component4_nodes.attributegraph.csv"));
+cc1nodes=readtable(fullfile(datapath,"metrics_for_graphs/50um-LADAF-2021-17_labels_finalised_2_connected_component1_nodes.attributegraph.csv"));
+cc9nodes=readtable(fullfile(datapath,"metrics_for_graphs/50um-LADAF-2021-17_labels_finalised_2_connected_component9_nodes.attributegraph.csv"));
+
+raw_data_path_cc1=fullfile(datapath,'Skeletonisation_raw_data/50um-LADAF-2021-17_labels_finalised_2_cc1.tif');
+raw_data_path_cc4=fullfile(datapath,'Skeletonisation_raw_data/50um-LADAF-2021-17_labels_finalised_2_cc4.tif');
+raw_data_path_cc9=fullfile(datapath,'Skeletonisation_raw_data/50um-LADAF-2021-17_labels_finalised_2_cc9.tif');
+
+
+%outliersallnetworks=readtable("F:\Dropbox (UCL)\Dropbox (UCL)\HiP-CT_Claire_analysis\LADAF-2021-17\Topology_paper\metrics_for_graphs\outliers_all_networks.csv")
+raw_dat_cc1=tiffreadVolume(raw_data_path_cc1);
+raw_dat_cc4=tiffreadVolume(raw_data_path_cc4);
+raw_dat_cc9=tiffreadVolume(raw_data_path_cc9);
+res=50;
+%imshow(raw_dat(:,:,1000));
+
+hasMatch = ~cellfun('isempty', regexp(genx_outliers.Properties.VariableNames, 'PointIDs')) ; % extracting the points for each segment
+for i=6%:height(genx_outliers)
+    i
+    seg=cell2mat(table2array(genx_outliers(i,genx_outliers.Properties.VariableNames(hasMatch)))); % take a single subsegment and make the points into an array.
+    segment=seg(~isnan(seg)); %% remove any Nans
+    rad=ceil(genx_outliers.MeanRadius(i)/res);
+    clear seg
+if genx_outliers.Identified_Graphs(i)==1
+    fprintf("subgraph1")
+   [pt1]= give_oblique_slice_info(cc1points,segment,res);  %% get the list of points the normal and the length of the subsegments in image i.e. voxel co-ordinates
+   rad_mult = 5;
+    [answer,min_x,max_x,min_y,max_y,min_z,max_z,subvol] = getboundingbox(pt1,rad,rad_mult,raw_dat_cc1);
+     if isnan(answer)
+         skipped(i)=1;
+         final_rad_segments{i}=NaN;
+         continue   % should skip to the next line of genx_outlier
+     end
+    while answer~=0
+       rad_mult=rad_mult+answer;
+       [answer,min_x,max_x,min_y,max_y,min_z,max_z,subvol] = getboundingbox(pt1,rad,rad_mult,raw_dat_cc1);
+    end
+
+
+elseif genx_outliers.Identified_Graphs(i)==4
+    fprintf("subgraph4")
+    [pt1]= give_oblique_slice_info(cc4points,segment,res); %% get the list of points the normal and the length of the subsegments in image i.e. voxel co-ordinates
+    %Section to create and check the bounding box
+    
+    rad_mult = 5;
+    [answer,min_x,max_x,min_y,max_y,min_z,max_z,subvol] = getboundingbox(pt1,rad,rad_mult,raw_dat_cc4);
+     if isnan(answer)
+         skipped(i)=1;
+         final_rad_segments{i}=NaN;
+         continue   % should skip to the next line of genx_outlier if you decide it doesnt need fixing
+     end
+    while answer~=0
+       rad_mult=rad_mult+answer;
+       [answer,min_x,max_x,min_y,max_y,min_z,max_z,subvol] = getboundingbox(pt1,rad,rad_mult,raw_dat_cc4);
+    end
+
+
+elseif  genx_outliers.Identified_Graphs(i)==9
+    fprintf("subgraph9")
+    [pt1]=give_oblique_slice_info(cc9points,segment,res); %% get the list of points the normal and the length of the subsegments in image i.e. voxel co-ordinates
+    rad_mult = 5;
+    [answer,min_x,max_x,min_y,max_y,min_z,max_z,subvol] = getboundingbox(pt1,rad,rad_mult,raw_dat_cc9);
+     if isnan(answer)
+         skipped(i)=1;
+         final_rad_segments{i}=NaN;
+         continue   % should skip to the next line of genx_outlier if you decide it doesnt need fixing
+     end
+    while answer~=0
+       rad_mult=rad_mult+answer;
+       [answer,min_x,max_x,min_y,max_y,min_z,max_z,subvol] = getboundingbox(pt1,rad,rad_mult,raw_dat_cc9);
+    end
+else 
+    fprintf("somethings up")
+end
+
+%end
+% section to do the oblique slices       
+for k=1:length(pt1)-1
+  point1=[pt1{k}(1)-min_y,pt1{k}(2)-min_x,pt1{k}(3)-min_z];
+  point2=[pt1{k+1}(1)-min_y,pt1{k+1}(2)-min_x,pt1{k+1}(3)-min_z];
+  normal=pt1{k}-pt1{k+1};
+
+  [test_reslice,xtest,ytest,ztest]=obliqueslice(subvol,point1,normal);
+%% For visualising slices every 10th uncomment the below 
+if k==1;
+    vizualisation(subvol,xtest,ytest,ztest,k,point1,point2)
+elseif rem(k,10)==0
+    vizualisation(subvol,xtest,ytest,ztest,k,point1,point2)
+end
+
+figure 
+subplot('Position',[0.11 0.36 0.38 0.5])
+surf(xtest,ytest,ztest,test_reslice,'EdgeColor','None','HandleVisibility','off');
+grid on 
+view([-38 12]) ;
+colormap(gray) ;
+xlabel('x-axis');
+ylabel('y-axis');
+zlabel('z-axis'); 
+title(sprintf('Slice in 3-D Coordinate Space plane %d',k)) %Plot the point and the normal vector.
+
+hold on 
+plot3(point1(1),point1(2),point1(3),'or','MarkerFaceColor','r');
+plot3(point1(1)+[0 normal(1)],point1(2)+[0 normal(2)],point1(3)+[0
+normal(3)], ...
+    '-b','MarkerFaceColor','b');
+hold off 
+legend('Point in the volume','Normal vector')
+
+
+subplot('Position',[0.6 0.37 0.34 0.49])
+
+figure
+    imshow(test_reslice,[]) 
+    title('Slice in Image Plane with centroids selected')
+hold on
+%% find the right vessel and report the perimeter    
+  test_reslice=imbinarize(test_reslice,0);
+
+   s=regionprops(test_reslice,"Centroid","Perimeter","Circularity","MajorAxisLength","PixelList");
+   centroids = cat(1,s.Centroid);
+   if size(centroids,1)==0
+       perim=NaN;
+   elseif size(centroids,1)>1
+    % take the centroid nearest to the point about which the reslice was
+    % made
+     reslice_point=min(find( round(xtest) == point1(1) &...
+                                round(ytest) == point1(2) &...
+                                round(ztest) == point1(3) ));
+    for n=1:size(centroids,1)
+       
+        
+        [pointRow,pointColumn] = ind2sub(size(test_reslice),reslice_point);  %% this is the index of the resliced point in the new slice
+        if length(pointRow)>1
+            pointRow=pointrow(1);
+            pointColumn=pointColumn(1);
+        end
+            dis(n)=norm([pointColumn,pointRow]-centroids(n,:));              %% distance between them
+    end
+        [~, ind]= min(dis);
+        perim= s(ind).Perimeter;
+       
+       
+         plot(centroids(:,1),centroids(:,2),'b*') %% select the one closer to the reslice point
+         plot(centroids(ind,1),centroids(ind,2),'r+') %% select the one closer to the reslice point
+         
+   else
+        plot(centroids(:,1),centroids(:,2),'r+') %% select the one closer to the centre of the subvolume if more than one
+    
+       perim=s.Perimeter;
+   end
+   clear dis s centroids pointRow pointColumn reslice_point
+hold off
+       corrected_rads(k)=perim/(2*pi)*res;
+
+
+%pause(10)
+end
+    corrected_rads(length(segment))=corrected_rads(length(segment)-1);
+        figure
+        plot(corrected_rads)
+        hold on
+        corrected_rads=filloutliers(corrected_rads,"nearest","percentiles",[5 90]);
+        corrected_rads=fillmissing(corrected_rads,'nearest');
+        new_mean=mean(corrected_rads);
+        plot(corrected_rads)
+        hold off 
+        title(sprintf('old rad %f  new rad %f',genx_outliers.MeanRadius(i),new_mean))
+        final_rad_segments{i,:}=corrected_rads;
+        clear corrected_rads
+       %replace_values(segment,corrected_rads)
+       pause(5)
+       %close all
+end
+
+final_rad_segments=within_range(final_rad_segments); % checks for which vessels the user said not to correct. Also allows for some manual intervention if some of the planes are crazy
+
+for i=1:length(final_rad_segments)
+    if isnan(final_rad_segments{i})
+        fprintf('%d not fixed',i)
+        continue
+    end
+    seg=cell2mat(table2array(genx_outliers(i,genx_outliers.Properties.VariableNames(hasMatch)))); % take a single subsegment and make the points into an array.
+    segment=seg(~isnan(seg)); %% remove any Nans
+    corrected_rads=final_rad_segments{i,:};
+    clear seg
+    if genx_outliers.Identified_Graphs(i)==1
+            cc1points=replace_thickness_vals(transpose(vertcat(segment,corrected_rads)),cc1points);
+   
+    elseif genx_outliers.Identified_Graphs(i)==4
+        
+            cc4points=replace_thickness_vals(transpose(vertcat(segment,corrected_rads)),cc4points);
+    
+    elseif genx_outliers.Identified_Graphs(i)==9
+
+        cc9points=replace_thickness_vals(transpose(vertcat(segment,corrected_rads)),cc9points);
+    else 
+        fpintf("problem")
+   
+    clear corrected_rads
+  
+    end
+end
+
+%%Writing out the data. 
+
+filepath_ascii_read=fullfile(datapath,"metrics_for_graphs/50um-LADAF-2021-17_labels_finalised_2_connected_component1.Spatial-Graph - Copy.am");
+filepath_ascii_write=fullfile(datapath,"metrics_for_graphs/After_corrections/50um-LADAF-2021-17_labels_finalised_2_connected_component1.Spatial-Graph_rad_correction.am");
+write_corrected_data(filepath_ascii_read,filepath_ascii_write,cc1points)
+
+filepath_ascii_read=fullfile(datapath,"metrics_for_graphs/50um-LADAF-2021-17_labels_finalised_2_connected_component4.Spatial-Graph - Copy.am");
+filepath_ascii_write=fullfile(datapath,"metrics_for_graphs/After_corrections/50um-LADAF-2021-17_labels_finalised_2_connected_component4.Spatial-Graph_rad_correction.am");
+write_corrected_data(filepath_ascii_read,filepath_ascii_write,cc4points)
+
+filepath_ascii_read=fullfile(datapath,"metrics_for_graphs/50um-LADAF-2021-17_labels_finalised_2connected_component9.Spatial-Graph - Copy.am");
+filepath_ascii_write=fullfile(datapath,"metrics_for_graphs/After_corrections/50um-LADAF-2021-17_labels_finalised_2_connected_component9.Spatial-Graph_rad_correction.am");
+write_corrected_data(filepath_ascii_read,filepath_ascii_write,cc9points)
+
+
+end
+
+
+
