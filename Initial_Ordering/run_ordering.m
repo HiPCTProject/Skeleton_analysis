@@ -4,8 +4,7 @@ function [NetworkStrahlerOrder,NetworkTopoGen]=run_ordering(filepath_ascii,filep
 %% read in the data 
 [point_thickness,point_coords,edge_numPoints,network,vertex_coords,identified_graph_verts]=read_data2(filepath_ascii);
 
-%% should run find_bad_edges here and update edge_nodes
-
+%% visualise the data in Matlab to check the root nodes are correctly identified
      s=network.edge_nodes(:,1);
      t=network.edge_nodes(:,2);
      G=digraph(s+1,t+1);
@@ -14,6 +13,7 @@ function [NetworkStrahlerOrder,NetworkTopoGen]=run_ordering(filepath_ascii,filep
      plot(G, 'NodeCdata', G.Nodes.Isterminal+1,'Layout','layered');
      rootIDs= find(G.outdegree==0)-1;
      
+     %% check and correct the root node if more that one is found - note you need to know all the IDs for all the root nodes for each graph.  
      corrected=0;
      if size(rootIDs,1)>1
          corrected=1;
