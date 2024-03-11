@@ -29,13 +29,13 @@ for i=1:height(genx_outliers)
     i
     seg=cell2mat(table2array(genx_outliers(i,genx_outliers.Properties.VariableNames(hasMatch)))); % take the segment and make the points that define it into an array.
     segment=seg(~isnan(seg)); %% remove any Nans
-    rad=ceil(genx_outliers.MeanRadius(i)/res); %% get the current radius of the segment to initalise the bounding box of the image
+    rad=ceil(genx_outliers.MeanRadius(i)/res); %% get the curren
     clear seg
-if genx_outliers.Identified_Graphs(i)==1 %% to identify which raw data label should be used, TODO could get rid of this if the whole volume was read in would be cleaner
+if genx_outliers.Identified_Graphs(i)==1
     fprintf("subgraph1")
    [pt1]= give_oblique_slice_info(cc1points,segment,res);  %% get the list of points the normal and the length of the subsegments in image i.e. voxel co-ordinates
    rad_mult = 5;
-    [answer,min_x,max_x,min_y,max_y,min_z,max_z,subvol] = getboundingbox(pt1,rad,rad_mult,raw_dat_cc1); %% this visualises the region and asks for user input before continuing
+    [answer,min_x,max_x,min_y,max_y,min_z,max_z,subvol] = getboundingbox(pt1,rad,rad_mult,raw_dat_cc1);
      if isnan(answer)
          skipped(i)=1;
          final_rad_segments{i}=NaN;
@@ -53,7 +53,7 @@ elseif genx_outliers.Identified_Graphs(i)==4
     %Section to create and check the bounding box
     
     rad_mult = 5;
-    [answer,min_x,max_x,min_y,max_y,min_z,max_z,subvol] = getboundingbox(pt1,rad,rad_mult,raw_dat_cc4); %% this visualises the region and asks for user input before continuing
+    [answer,min_x,max_x,min_y,max_y,min_z,max_z,subvol] = getboundingbox(pt1,rad,rad_mult,raw_dat_cc4);
      if isnan(answer)
          skipped(i)=1;
          final_rad_segments{i}=NaN;
@@ -69,7 +69,7 @@ elseif  genx_outliers.Identified_Graphs(i)==9
     fprintf("subgraph9")
     [pt1]=give_oblique_slice_info(cc9points,segment,res); %% get the list of points the normal and the length of the subsegments in image i.e. voxel co-ordinates
     rad_mult = 5;
-    [answer,min_x,max_x,min_y,max_y,min_z,max_z,subvol] = getboundingbox(pt1,rad,rad_mult,raw_dat_cc9); %% this visualises the region and asks for user input before continuing
+    [answer,min_x,max_x,min_y,max_y,min_z,max_z,subvol] = getboundingbox(pt1,rad,rad_mult,raw_dat_cc9);
      if isnan(answer)
          skipped(i)=1;
          final_rad_segments{i}=NaN;
@@ -83,21 +83,21 @@ else
     fprintf("somethings up")
 end
 
-% section to do the oblique slices for a particular segement       
+%end
+% section to do the oblique slices       
 for k=1:length(pt1)-1
-  point1=[pt1{k}(1)-min_y,pt1{k}(2)-min_x,pt1{k}(3)-min_z];  %first point corrected position within the subvolume
-  point2=[pt1{k+1}(1)-min_y,pt1{k+1}(2)-min_x,pt1{k+1}(3)-min_z];%second point corrected position within the subvolume
-  normal=pt1{k}-pt1{k+1}; %% normal between the two points
+  point1=[pt1{k}(1)-min_y,pt1{k}(2)-min_x,pt1{k}(3)-min_z];
+  point2=[pt1{k+1}(1)-min_y,pt1{k+1}(2)-min_x,pt1{k+1}(3)-min_z];
+  normal=pt1{k}-pt1{k+1};
 
-  [test_reslice,xtest,ytest,ztest]=obliqueslice(subvol,point1,normal); 
-
- %% For visualising slices every 10th uncomment the below This code is super annoying and should be updated to make it simpler 
+  [test_reslice,xtest,ytest,ztest]=obliqueslice(subvol,point1,normal);
+%% For visualising slices every 10th uncomment the below 
 if k==1;
     vizualisation(subvol,xtest,ytest,ztest,k,point1,point2)
 elseif rem(k,10)==0
     vizualisation(subvol,xtest,ytest,ztest,k,point1,point2)
 end
-%% This block of code should ideally be put inside the visualisation function it is for looking at the 2D slices but it very annoying. 
+
 figure 
 subplot('Position',[0.11 0.36 0.38 0.5])
 surf(xtest,ytest,ztest,test_reslice,'EdgeColor','None','HandleVisibility','off');
@@ -124,7 +124,6 @@ figure
     imshow(test_reslice,[]) 
     title('Slice in Image Plane with centroids selected')
 hold on
-
 %% find the right vessel and report the perimeter    
   test_reslice=imbinarize(test_reslice,0);
 

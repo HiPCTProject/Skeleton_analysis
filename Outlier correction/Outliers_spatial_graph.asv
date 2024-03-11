@@ -140,7 +140,7 @@ for i=1:height(all_network)
 
 
 
-%% Correct the large outliers and write everything.Takes in the list of outliers, the corrected thicknesses for each segment and also the filepath to the raw image data.
+%% Correct the large outliers and write everything.
 
 oblique_slice_vessel(genx_outliers,cc4points,cc1points,cc9points,'F:\Dropbox (UCL)\Dropbox (UCL)\HiP-CT_Claire_analysis\LADAF-2021-17\Topology_paper\Skeletonisation_raw_data\50um-LADAF-2021-17_labels_finalised_2.tif')
 
