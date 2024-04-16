@@ -1,4 +1,4 @@
-function [parent_rad,sumchild] =murrays_law(filepath_ascii)
+function [parent_rad,sumchild,strahler_murray] =murrays_law(filepath_ascii)
 
 [edge_network,vert_network,point_network,edge, point,vertex]=ultimate_amira_read(filepath_ascii);
 
@@ -46,11 +46,12 @@ ind=find(network.edge_nodes(:,2)==node);
 ind2=find(network.edge_nodes(:,1)==node);
 
 parent_rad(i)=edge_network.MeanRadius_EDGE{1}(ind2)^3;
+strahler_murray(i)=edge_network.strahler_EDGE{1}(ind2);
 %children rads
 
 children=edge_network.MeanRadius_EDGE{1}(ind);
 sumchild(i)=sum(children.^3);
 clear children ind ind2
 end
-[parent_rad,sumchild];
+[parent_rad,sumchild, strahler_murray];
 end

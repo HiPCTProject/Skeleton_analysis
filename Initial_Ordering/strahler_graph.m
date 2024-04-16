@@ -47,7 +47,7 @@ end
 edge_nodes_temp=edge_nodes;  % duplicate the edges (this will reduce in number beach iteration)
 
 
-while(sum(Strahler(:,2)==0)>1)
+while(sum(Strahler(:,2)==0)>1) 
     edges = unique(edge_nodes_temp);  
     counts = histc(edge_nodes_temp(:),edges); %this is the co-ordination number
     idx = find(counts == 1); %Get those with only 1 end.

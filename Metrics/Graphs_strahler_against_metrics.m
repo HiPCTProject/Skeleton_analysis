@@ -172,7 +172,7 @@ files=dir(fullfile(datapath,"*attribute*.am"));
 
 for i=1:length(files)
 filepath_ascii=fullfile(files(i).folder,files(i).name);
-[Parent_rad{i} sumchild{i}]=murray_law(filepath_ascii);
+[Parent_rad{i} sumchild{i},strahler_murray{i}]=murray_law(filepath_ascii);
 end
 
 parents=horzcat(Parent_rad{1},Parent_rad{2},Parent_rad{3});

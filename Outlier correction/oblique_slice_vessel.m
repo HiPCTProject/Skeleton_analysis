@@ -4,7 +4,8 @@
 function oblique_slice_vessel(genx_outliers,cc4points,cc1points,cc9points,raw_data_path)
 
 %% the readers for this could again be replaced with a reading of the amira attributes graph or could be passed in from the Outliers_spatial_graph.m 
-datapath='/Users/clairewalsh/Dropbox (UCL)/HiP-CT_Claire_analysis/LADAF-2021-17/Topology_paper'
+%datapath='/Users/clairewalsh/Dropbox (UCL)/HiP-CT_Claire_analysis/LADAF-2021-17/Topology_paper'
+datapath='F:\Dropbox (UCL)\Dropbox (UCL)\HiP-CT_Claire_analysis\LADAF-2021-17\Topology_paper'
 cc4nodes=readtable(fullfile(datapath,"metrics_for_graphs/50um-LADAF-2021-17_labels_finalised_2_connected_component4_nodes.attributegraph.csv"));
 cc1nodes=readtable(fullfile(datapath,"metrics_for_graphs/50um-LADAF-2021-17_labels_finalised_2_connected_component1_nodes.attributegraph.csv"));
 cc9nodes=readtable(fullfile(datapath,"metrics_for_graphs/50um-LADAF-2021-17_labels_finalised_2_connected_component9_nodes.attributegraph.csv"));
@@ -25,7 +26,7 @@ hasMatch = ~cellfun('isempty', regexp(genx_outliers.Properties.VariableNames, 'P
 
 %% this next loop is the main part of the code it will go though all outliers visulaise the part of the raw data, ask the user if they want to correct it and if yes do the correction. 
 
-for i=1:height(genx_outliers)
+for i=1:1%:height(genx_outliers)
     i
     seg=cell2mat(table2array(genx_outliers(i,genx_outliers.Properties.VariableNames(hasMatch)))); % take the segment and make the points that define it into an array.
     segment=seg(~isnan(seg)); %% remove any Nans
