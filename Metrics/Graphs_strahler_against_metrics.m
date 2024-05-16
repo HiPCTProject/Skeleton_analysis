@@ -57,12 +57,13 @@ clear Branching_Angle IVD
 
 for i=1:max(all_network.strahler)
 tort{i}=all_network.Tortuosity(all_network.strahler==i);
+length{i}=all_network.CurvedLength(all_network.strahler==i);
 rad{i}=all_network.MeanRadius(all_network.strahler==i);
 lDR{i}=all_network.CurvedLength(all_network.strahler==i)./all_network.MeanRadius(all_network.strahler==i);
 OrientationTheta{i}=all_network.OrientationTheta(all_network.strahler==i);
 OrinetationPhi{i}=all_network.OrientationPhi(all_network.strahler==i);
-%Branching_Angle{i}=all_network.Branching_Angle(all_network.strahler==i)
-%IVD{i}=all_network.inter_vessel_dist(all_network.strahler==i)
+Branching_Angle{i}=all_network.Branching_Angle(all_network.strahler==i)
+IVD{i}=all_network.inter_vessel_dist(all_network.strahler==i)
 vol{i}=all_network.Volume(all_network.strahler==i)
 end
 
@@ -75,6 +76,12 @@ mean_LDR=cellfun(@mean, lDR);
 std_lDR=cellfun(@std, lDR);
 mean_vol=cellfun(@mean, vol);
 std_vol=cellfun(@std, vol);
+mean_length=cellfun(@mean, length);
+std_lenth=cellfun(@std, length);
+mean_BA=cellfun(@nanmean, Branching_Angle);
+std_BA=cellfun(@nanstd, Branching_Angle);
+mean_IVD=cellfun(@mean, IVD);
+std_IVD=cellfun(@std, IVD);
 
 %% group parameters for kmean analysis and write out (the kmeans is done in python as it is easier)
 clusterparams=[all_network.topo,all_network.MeanRadius,...

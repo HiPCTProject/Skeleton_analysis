@@ -1,14 +1,14 @@
 
 function [ivd]=intervessel_distance(filepath_ascii)
 
-[network,vertex_coords,vertex,edge,edge_numPoints,point_coords]=read_data2(filepath_ascii);
-
+%[network,vertex_coords,vertex,edge,edge_numPoints,point_coords]=read_data2(filepath_ascii);
+[edge_network,vert_network,point_network,edge, point,vertex]=ultimate_amira_read(filepath_ascii);
 %% Branches
 disp('Gathering branch data');
-branches = zeros(edge, max(edge_numPoints));
+branches = zeros(edge, max(edge_network.NumEdgePoints_EDGE{1}));
 point_no = 1;
 for i =1:edge
-    for j = 1:edge_numPoints(i)
+    for j = 1:edge_network.NumEdgePoints_EDGE{1}(i)
         branches(i,j) = point_no;     
         point_no = point_no + 1;
     end
@@ -31,8 +31,8 @@ for i = 1:edge
         point_no_1 = branch(j);
         point_no_2 = branch(j+1);
         
-        coord1 = point_coords(point_no_1, :);
-        coord2 = point_coords(point_no_2, :);
+        coord1 = point_network.EdgePointCoordinates_POINT{1}(point_no_1, :);
+        coord2 = point_network.EdgePointCoordinates_POINT{1}(point_no_2, :);
         
         segment_length = norm(coord2 - coord1);
         
@@ -54,7 +54,7 @@ for i = 1:edge
         end
     end
     
-    centre_point(i, :) = point_coords(branches(i,closest_node), :);
+    centre_point(i, :) = point_network.EdgePointCoordinates_POINT{1}(branches(i,closest_node), :);
 end
 
 %% Distances

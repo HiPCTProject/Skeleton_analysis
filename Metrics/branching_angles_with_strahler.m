@@ -4,15 +4,16 @@ function [BA_edge,BA_vertex]=branching_angles_with_strahler(filepath_ascii)
 
 %% should run find_bad_edges here and update edge_nodes
 
-     s=edge_network.EdgeConnectivity_EDGE{1}(:,1);
+%% Check and fix edges
+s=edge_network.EdgeConnectivity_EDGE{1}(:,1);
      t=edge_network.EdgeConnectivity_EDGE{1}(:,2);
      G=digraph(s+1,t+1);
      G.Nodes.Isterminal = G.outdegree == 0;
      figure
      plot(G, 'NodeCdata', G.Nodes.Isterminal+1,'Layout','layered');
      rootIDs= find(G.outdegree==0)-1;
-     
-     corrected=0;
+
+ corrected=0;
 
      if size(rootIDs,1)>1 % check if there is more than one root node.
          corrected=1;
@@ -23,7 +24,7 @@ function [BA_edge,BA_vertex]=branching_angles_with_strahler(filepath_ascii)
          if ismember(answer,rootIDs)
              rootIDs=answer;
          end
-         [new_edge_nodes,bad_edge_indices] =Find_bad_edges(network.EdgeConnectivity_EDGE,rootIDs);
+         [new_edge_nodes,bad_edge_indices] =Find_bad_edges(cell2mat(edge_network.EdgeConnectivity_EDGE),rootIDs);
          %clear network
         network=table(new_edge_nodes);   %% put the new nodes into the table network to be used for the rest of the Strahler stuff
         network.Properties.VariableNames= [{'edge_nodes'} ];
