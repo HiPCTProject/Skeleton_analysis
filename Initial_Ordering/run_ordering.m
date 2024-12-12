@@ -2,11 +2,11 @@
 function [NetworkStrahlerOrder,NetworkTopoGen]=run_ordering(filepath_ascii,filepath_ascii_write)
 
 %% read in the data 
-[point_thickness,point_coords,edge_numPoints,network,vertex_coords,identified_graph_verts]=read_data2(filepath_ascii); %TO DO UPDATE THIS TO USE THE ULTIMATE_AMIRA_READER
-
+%[point_thickness,point_coords,edge_numPoints,network,vertex_coords,identified_graph_verts]=read_data2(filepath_ascii); %TO DO UPDATE THIS TO USE THE ULTIMATE_AMIRA_READER
+[edge_network,vert_network,point_network,edge, point,vertex]=ultimate_amira_read(filepath_ascii); %TO DO UPDATE THIS TO USE THE ULTIMATE_AMIRA_READER
 %% visualise the data in Matlab to check the root nodes are correctly identified
-     s=network.edge_nodes(:,1);
-     t=network.edge_nodes(:,2);
+     s=edge_network.EdgeConnectivity_EDGE{:}(:,1);
+     t=edge_network.EdgeConnectivity_EDGE{:}(:,2);
      G=digraph(s+1,t+1);
      G.Nodes.Isterminal = G.outdegree == 0;
      figure
@@ -24,23 +24,28 @@ function [NetworkStrahlerOrder,NetworkTopoGen]=run_ordering(filepath_ascii,filep
          if ismember(answer,rootIDs)
              rootIDs=answer;
          end
-         [new_edge_nodes,bad_edge_indices] =Find_bad_edges(network.edge_nodes,rootIDs);
-         identified_graph_edges=network.identified_graph_edges;
-         original_edges=network.edge_nodes;
+         [new_edge_nodes,bad_edge_indices] =Find_bad_edges(edge_network.EdgeConnectivity_EDGE{:},rootIDs);
+         identified_graph_edges=edge_network.SubgraphID_EDGE{:};
+         original_edges=edge_network.EdgeConnectivity_EDGE{:};
          clear network
          network=table(new_edge_nodes,identified_graph_edges);   %% put the new nodes into the table network to be used for the rest of the Strahler stuff
+         network.Properties.VariableNames= [{'edge_nodes'}    {'identified_graph_edges'}];
+     else
+         network=table(edge_network.EdgeConnectivity_EDGE{:},edge_network.SubgraphID_EDGE{:});   %% put the new nodes into the table network to be used for the rest of the Strahler stuff
          network.Properties.VariableNames= [{'edge_nodes'}    {'identified_graph_edges'}];
      end
 
      
   %% now do the Strahler and topo ordering       
 
-    for i=1:max(identified_graph_verts)
-        fprintf('subgraph it is subgraph %d \n',i) % This is here so that the code could be used with mutliple subgraphs but for the kidney I split the file into 3 separate graphs as it was easier to process. 
+    for i=1%:max(edge_network.SubgraphID_EDGE{:})
+        fprintf('subgraph iD is subgraph %d \n',i) % This is here so that the code could be used with mutliple subgraphs but for the kidney I split the file into 3 separate graphs as it was easier to process. 
         clear subgraph
-        subgraph=network(network.identified_graph_edges==i,:);
+        subgraph=network;
+       % subgraph=network(network.identified_graph_edges==i,:);
         root_nodeID=rootIDs(ismember(rootIDs,subgraph.edge_nodes(:,2)));
     if length(subgraph.edge_nodes)==2
+        print('doing this')
        NetworkStrahlerOrder{i}=[subgraph.edge_nodes(1),1;subgraph.edge_nodes(2),1]
        NetworkTopoGen{i}=[subgraph.edge_nodes(1),1;subgraph.edge_nodes(2),1]
        EdgeNodesTopo{i}=[subgraph.edge_nodes(1),subgraph.edge_nodes(2),1]
@@ -67,8 +72,8 @@ function [NetworkStrahlerOrder,NetworkTopoGen]=run_ordering(filepath_ascii,filep
  %% network_topo is the topological order for the Vertices, (not normally used but I found useful for some analyses of topology)
     %network_topo = cat(1,NetworkTopoGen{:});
     edge_nodes_topo = cat(1,EdgeNodesTopo{:});
-    write_back_strahler(edge_nodes_strahler,network.edge_nodes,edge_numPoints,filepath_ascii_write) %% THIS WRITES back to an amira file with the new categories (would be good to update this writer too)
-    write_back_topo(edge_nodes_topo,network.edge_nodes,edge_numPoints,filepath_ascii_write)
+    write_back_strahler(edge_nodes_strahler,network.edge_nodes,edge,filepath_ascii_write) %% THIS WRITES back to an amira file with the new categories (would be good to update this writer too)
+    write_back_topo(edge_nodes_topo,network.edge_nodes,edge,filepath_ascii_write)
 
     %% NOW visualsise your data in Amira to check it looks good and do some multi-scale smoothing, after this you can do. outlier corrections
 
@@ -85,7 +90,7 @@ end
 
 strahler=repelem(edge_nodes(:,3),edge_numPoints);
 %prompt='please add the text \n POINT { float strahler } @8 \n just before the Data section in the ascii file and then save, once done enter 1'
-prompt='please add the text \n EDGE { int strahler } @8 \n just before the Data section in the ascii file and then save, once done enter 1'
+prompt='please add the text \n EDGE { int strahler } @8 \n just before the Data section in the ascii file check the numner @8 is correct in your case and is the same as the value in line 102 of this code and then save, once done enter 1'
 renamed=input(prompt);
 
 if renamed==1
@@ -94,7 +99,7 @@ disp('Reading in data');
 
 [fileID msg] = fopen(filepath_ascii, 'a+');
 fprintf(fileID,'\n');
-fprintf(fileID,'@8');
+fprintf(fileID,'@22');
 fprintf(fileID,'\n');
 fprintf(fileID,'%f\n',edge_nodes_strahler(:,3));
 %fprintf(fileID,'%f\n',strahler);
@@ -115,7 +120,7 @@ for i=1:length(edge_nodes_topo)
 end
 
 %topo=repelem(edge_nodes(:,3),edge_numPoints);
-prompt='please add the text \n EDGE { int topo } @9 \n just before the Data section in the ascii file and then save, once done enter 1'
+prompt='please add the text \n EDGE { int topo } @9 \n just before the Data section in the ascii file and then save check the numner @9 is correct in your case and is the same as the value in line 132 of this code, once done enter 1'
 renamed=input(prompt);
 
 if renamed==1
@@ -124,7 +129,7 @@ disp('Reading in data');
 
 [fileID msg] = fopen(filepath_ascii, 'a+');
 fprintf(fileID,'\n');
-fprintf(fileID,'@9');
+fprintf(fileID,'@23');
 fprintf(fileID,'\n');
 fprintf(fileID,'%f\n',edge_nodes_topo(:,3));
 fclose(fileID)
