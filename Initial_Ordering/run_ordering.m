@@ -1,6 +1,17 @@
 %% Code for Strahler Ordering
 function [NetworkStrahlerOrder,NetworkTopoGen]=run_ordering(filepath_ascii,filepath_ascii_write)
 
+
+%filepath_ascii='Artery1_only.Spatial-Graph_Reduced.am';
+%filepath_ascii_write='Artery1_only.Spatial-Graph_Reduced2.am';
+
+%filepath_ascii='Shahrokh_Labels_In_Zoom_Region_50um_Reduced.Spatial-Graph.am';
+%filepath_ascii_write='Shahrokh_Labels_In_Zoom_Region_50um_Reduced.Spatial-Graph2.am';
+
+%filepath_ascii='Test.am';
+%filepath_ascii_write='Test2.am';
+
+%filepath_ascii='C:\Users\youso\Desktop\Skeleton_Analysis\Skeleton_analysis-main\Initial_Ordering';
 %% read in the data 
 %[point_thickness,point_coords,edge_numPoints,network,vertex_coords,identified_graph_verts]=read_data2(filepath_ascii); %TO DO UPDATE THIS TO USE THE ULTIMATE_AMIRA_READER
 [edge_network,vert_network,point_network,edge, point,vertex]=ultimate_amira_read(filepath_ascii); %TO DO UPDATE THIS TO USE THE ULTIMATE_AMIRA_READER
@@ -14,6 +25,15 @@ function [NetworkStrahlerOrder,NetworkTopoGen]=run_ordering(filepath_ascii,filep
      rootIDs= find(G.outdegree==0)-1;
      
      %% check and correct the root node if more that one is found - note you need to know all the IDs for all the root nodes for each graph.  
+     if exist('edge_network.SubgraphID_EDGE') ~= 1; 
+        disp('adding subgraph ID')
+        %SubgraphID = num2cell((zeros(1,size(edge_network.EdgeConnectivity_EDGE{:})));
+        A=ones(size(edge_network.NumEdgePoints_EDGE{:}));
+        B{1}=num2cell(A);
+        edge_network.("SubgraphID_EDGE")= B; %zeros(size(edge_network.NumEdgePoints_EDGE{:}))
+        % edge_network = addvars(edge_network,transpose(SubgraphID_EDGE));
+     end
+
      corrected=0;
      if size(rootIDs,1)>1
          corrected=1;
@@ -38,7 +58,7 @@ function [NetworkStrahlerOrder,NetworkTopoGen]=run_ordering(filepath_ascii,filep
      
   %% now do the Strahler and topo ordering       
 
-    for i=1%:max(edge_network.SubgraphID_EDGE{:})
+    for i=1:max(cell2mat(edge_network.SubgraphID_EDGE{:}))
         fprintf('subgraph iD is subgraph %d \n',i) % This is here so that the code could be used with mutliple subgraphs but for the kidney I split the file into 3 separate graphs as it was easier to process. 
         clear subgraph
         subgraph=network;
