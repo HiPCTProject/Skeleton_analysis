@@ -13,28 +13,49 @@ s=edge_network.EdgeConnectivity_EDGE{1}(:,1);
      plot(G, 'NodeCdata', G.Nodes.Isterminal+1,'Layout','layered');
      rootIDs= find(G.outdegree==0)-1;
 
- corrected=0;
+  %% check and correct the root node if more that one is found - note you need to know all the IDs for all the root nodes for each graph.  
+     if exist('edge_network.SubgraphID_EDGE') ~= 1; 
+        disp('adding subgraph ID')
+        %SubgraphID = num2cell((zeros(1,size(edge_network.EdgeConnectivity_EDGE{:})));
+        A=ones(size(edge_network.NumEdgePoints_EDGE{:}));
+        B{1}=num2cell(A);
+        edge_network.("SubgraphID_EDGE")= B; %zeros(size(edge_network.NumEdgePoints_EDGE{:}))
+        % edge_network = addvars(edge_network,transpose(SubgraphID_EDGE));
+     end
 
-     if size(rootIDs,1)>1 % check if there is more than one root node.
+     corrected=0;
+     update_root=0;
+     if size(rootIDs,1)>1
          corrected=1;
          prompt='input the correct Root_node ID'
 
-         answer = (inputdlg(prompt))
-         answer=str2num(cell2mat(answer))
-         if ismember(answer,rootIDs)
-             rootIDs=answer;
+         answer1 = (inputdlg(prompt))
+         answer1=str2num(cell2mat(answer1))
+         if ismember(answer1,rootIDs)
+             rootIDs=answer1;
+         else
+             question=menu('are you really sure that is the root nodeID, double check it in amira if you say yes now I will re-do the newtork with this root node so if you are wrong it will be sad','Yes','No');             
+             if question==1;
+               rootIDs=answer1;
+               update_root=1;
+
+             end
+
          end
-         [new_edge_nodes,bad_edge_indices] =Find_bad_edges(cell2mat(edge_network.EdgeConnectivity_EDGE),rootIDs);
-         %clear network
-        network=table(new_edge_nodes);   %% put the new nodes into the table network to be used for the rest of the Strahler stuff
-        network.Properties.VariableNames= [{'edge_nodes'} ];
+     
+         [new_edge_nodes,bad_edge_indices] =Find_bad_edges(edge_network.EdgeConnectivity_EDGE{:},rootIDs,update_root);
+         identified_graph_edges=edge_network.SubgraphID_EDGE{:};
+         original_edges=edge_network.EdgeConnectivity_EDGE{:};
+         clear network
+         network=table(new_edge_nodes,identified_graph_edges);   %% put the new nodes into the table network to be used for the rest of the Strahler stuff
+         network.Properties.VariableNames= [{'edge_nodes'}    {'identified_graph_edges'}];
      else
-         original_edges=cell2mat(edge_network.EdgeConnectivity_EDGE);
-         network=table([original_edges]);
-         network.Properties.VariableNames= [{'edge_nodes'} ];
+         network=table(edge_network.EdgeConnectivity_EDGE{:},edge_network.SubgraphID_EDGE{:});   %% put the new nodes into the table network to be used for the rest of the Strahler stuff
+         network.Properties.VariableNames= [{'edge_nodes'}    {'identified_graph_edges'}];
      end
 
- 
+
+ %% now the branching angle can be done 
 
 edges = unique(network.edge_nodes);
 counts = histc(network.edge_nodes(:), edges); %this is the co-ordination number
