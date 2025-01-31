@@ -1,6 +1,17 @@
 %% Code for Strahler Ordering
 function [NetworkStrahlerOrder,NetworkTopoGen]=run_ordering(filepath_ascii,filepath_ascii_write)
 
+
+%filepath_ascii='Artery1_only.Spatial-Graph_Reduced.am';
+%filepath_ascii_write='Artery1_only.Spatial-Graph_Reduced2.am';
+
+%filepath_ascii='Shahrokh_Labels_In_Zoom_Region_50um_Reduced.Spatial-Graph.am';
+%filepath_ascii_write='Shahrokh_Labels_In_Zoom_Region_50um_Reduced.Spatial-Graph2.am';
+
+%filepath_ascii='Test.am';
+%filepath_ascii_write='Test2.am';
+
+%filepath_ascii='C:\Users\youso\Desktop\Skeleton_Analysis\Skeleton_analysis-main\Initial_Ordering';
 %% read in the data 
 %[point_thickness,point_coords,edge_numPoints,network,vertex_coords,identified_graph_verts]=read_data2(filepath_ascii); %TO DO UPDATE THIS TO USE THE ULTIMATE_AMIRA_READER
 [edge_network,vert_network,point_network,edge, point,vertex]=ultimate_amira_read(filepath_ascii); %TO DO UPDATE THIS TO USE THE ULTIMATE_AMIRA_READER
@@ -14,15 +25,31 @@ function [NetworkStrahlerOrder,NetworkTopoGen]=run_ordering(filepath_ascii,filep
      rootIDs= find(G.outdegree==0)-1;
      
      %% check and correct the root node if more that one is found - note you need to know all the IDs for all the root nodes for each graph.  
+     if exist('edge_network.SubgraphID_EDGE') ~= 1; 
+        disp('adding subgraph ID')
+        %SubgraphID = num2cell((zeros(1,size(edge_network.EdgeConnectivity_EDGE{:})));
+        A=ones(size(edge_network.NumEdgePoints_EDGE{:}));
+        B{1}=num2cell(A);
+        edge_network.("SubgraphID_EDGE")= B; %zeros(size(edge_network.NumEdgePoints_EDGE{:}))
+        % edge_network = addvars(edge_network,transpose(SubgraphID_EDGE));
+     end
+
      corrected=0;
      if size(rootIDs,1)>1
          corrected=1;
          prompt='input the correct Root_node ID'
 
-         answer = (inputdlg(prompt))
-         answer=str2num(cell2mat(answer))
-         if ismember(answer,rootIDs)
-             rootIDs=answer;
+         answer1 = (inputdlg(prompt))
+         answer1=str2num(cell2mat(answer))
+         if ismember(answer1,rootIDs)
+             rootIDs=answer1;
+         else
+             prompt='are you really sure that is the root nodeID (y/n), double check it in amira if you say y now I will re-do the newtork with this root node so if you are wrong it will be sad'
+             answer =(inputdlg(prompt))
+             if answer=='y'
+               rootIDs=answer1;
+              
+
          end
          [new_edge_nodes,bad_edge_indices] =Find_bad_edges(edge_network.EdgeConnectivity_EDGE{:},rootIDs);
          identified_graph_edges=edge_network.SubgraphID_EDGE{:};
@@ -38,11 +65,11 @@ function [NetworkStrahlerOrder,NetworkTopoGen]=run_ordering(filepath_ascii,filep
      
   %% now do the Strahler and topo ordering       
 
-    for i=0%:max(edge_network.SubgraphID_EDGE{:})
-        fprintf('subgraph it is subgraph %d \n',i) % This is here so that the code could be used with mutliple subgraphs but for the kidney I split the file into 3 separate graphs as it was easier to process. 
+    for i=1:max(cell2mat(edge_network.SubgraphID_EDGE{:}))
+        fprintf('subgraph iD is subgraph %d \n',i) % This is here so that the code could be used with mutliple subgraphs but for the kidney I split the file into 3 separate graphs as it was easier to process. 
         clear subgraph
-       % subgraph=network;
-        subgraph=network(network.identified_graph_edges==i,:);
+        subgraph=network;
+       % subgraph=network(network.identified_graph_edges==i,:);
         root_nodeID=rootIDs(ismember(rootIDs,subgraph.edge_nodes(:,2)));
     if length(subgraph.edge_nodes)==2
         print('doing this')
@@ -90,7 +117,7 @@ end
 
 strahler=repelem(edge_nodes(:,3),edge_numPoints);
 %prompt='please add the text \n POINT { float strahler } @8 \n just before the Data section in the ascii file and then save, once done enter 1'
-prompt='please add the text \n EDGE { int strahler } @8 \n just before the Data section in the ascii file and then save, once done enter 1'
+prompt='please add the text \n EDGE { int strahler } @8 \n just before the Data section in the ascii file check the numner @8 is correct in your case and is the same as the value in line 102 of this code and then save, once done enter 1'
 renamed=input(prompt);
 
 if renamed==1
@@ -99,7 +126,7 @@ disp('Reading in data');
 
 [fileID msg] = fopen(filepath_ascii, 'a+');
 fprintf(fileID,'\n');
-fprintf(fileID,'@20');
+fprintf(fileID,'@22');
 fprintf(fileID,'\n');
 fprintf(fileID,'%f\n',edge_nodes_strahler(:,3));
 %fprintf(fileID,'%f\n',strahler);
@@ -120,7 +147,7 @@ for i=1:length(edge_nodes_topo)
 end
 
 %topo=repelem(edge_nodes(:,3),edge_numPoints);
-prompt='please add the text \n EDGE { int topo } @9 \n just before the Data section in the ascii file and then save, once done enter 1'
+prompt='please add the text \n EDGE { int topo } @9 \n just before the Data section in the ascii file and then save check the numner @9 is correct in your case and is the same as the value in line 132 of this code, once done enter 1'
 renamed=input(prompt);
 
 if renamed==1
@@ -129,7 +156,7 @@ disp('Reading in data');
 
 [fileID msg] = fopen(filepath_ascii, 'a+');
 fprintf(fileID,'\n');
-fprintf(fileID,'@21');
+fprintf(fileID,'@23');
 fprintf(fileID,'\n');
 fprintf(fileID,'%f\n',edge_nodes_topo(:,3));
 fclose(fileID)

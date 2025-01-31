@@ -35,16 +35,26 @@ function [NetworkStrahlerOrder,NetworkTopoGen]=run_ordering(filepath_ascii,filep
      end
 
      corrected=0;
+     update_root=0;
      if size(rootIDs,1)>1
          corrected=1;
          prompt='input the correct Root_node ID'
 
-         answer = (inputdlg(prompt))
-         answer=str2num(cell2mat(answer))
-         if ismember(answer,rootIDs)
-             rootIDs=answer;
+         answer1 = (inputdlg(prompt))
+         answer1=str2num(cell2mat(answer1))
+         if ismember(answer1,rootIDs)
+             rootIDs=answer1;
+         else
+             question=menu('are you really sure that is the root nodeID, double check it in amira if you say yes now I will re-do the newtork with this root node so if you are wrong it will be sad','Yes','No');             
+             if question==1;
+               rootIDs=answer1;
+               update_root=1;
+
+             end
+
          end
-         [new_edge_nodes,bad_edge_indices] =Find_bad_edges(edge_network.EdgeConnectivity_EDGE{:},rootIDs);
+     
+         [new_edge_nodes,bad_edge_indices] =Find_bad_edges(edge_network.EdgeConnectivity_EDGE{:},rootIDs,update_root);
          identified_graph_edges=edge_network.SubgraphID_EDGE{:};
          original_edges=edge_network.EdgeConnectivity_EDGE{:};
          clear network
@@ -119,7 +129,7 @@ disp('Reading in data');
 
 [fileID msg] = fopen(filepath_ascii, 'a+');
 fprintf(fileID,'\n');
-fprintf(fileID,'@22');
+fprintf(fileID,'@8');
 fprintf(fileID,'\n');
 fprintf(fileID,'%f\n',edge_nodes_strahler(:,3));
 %fprintf(fileID,'%f\n',strahler);
@@ -149,7 +159,7 @@ disp('Reading in data');
 
 [fileID msg] = fopen(filepath_ascii, 'a+');
 fprintf(fileID,'\n');
-fprintf(fileID,'@23');
+fprintf(fileID,'@9');
 fprintf(fileID,'\n');
 fprintf(fileID,'%f\n',edge_nodes_topo(:,3));
 fclose(fileID)

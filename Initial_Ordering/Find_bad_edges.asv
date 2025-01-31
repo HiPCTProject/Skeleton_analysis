@@ -1,14 +1,11 @@
 function [edge_nodes,bad_edge_indices] =Find_bad_edges(edge_nodes,rootIDs,update_root)
- % duplicate the edges (this will reduce in number beach iteration)
+edge_nodes_temp=edge_nodes;  % duplicate the edges (this will reduce in number beach iteration)
 
-if update_root==1
-    root_node_ind=find(edge_nodes(:,1)==rootIDs);  % this is the row index in edge-nodes where the root node ID is placed.
-    new_row=[edge_nodes(root_node_ind,2),edge_nodes(root_node_ind,1)];
-    edge_nodes(root_node_ind,:)=new_row;
-    edge_nodes_temp=edge_nodes; 
-else
-    edge_nodes_temp=edge_nodes; 
-end
+if update_root=1
+root_node_ind=find(edge_nodes(:,1)==rootIDs);  % this is the row index in edge-nodes where the root node ID is placed.
+new_row=[edge_nodes_temp(root_node_ind,2),edge_nodes_temp(root_node_ind,1)]
+edge_nodes_temp(root_node_ind,:)=new_row;
+
 
 root_node_ind=find(edge_nodes(:,2)==rootIDs);  % this is the row index in edge-nodes where the root node ID is placed.
 Strahler=1;
